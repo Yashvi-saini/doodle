@@ -12,7 +12,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:android": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-android-env.ps1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
