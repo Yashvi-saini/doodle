@@ -10,7 +10,7 @@
     "prebuild": "expo prebuild",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "dependencies": {
     "@doodle/shared": "workspace:*",
