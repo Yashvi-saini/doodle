@@ -34,6 +34,7 @@ export const ErrorCode = z.enum([
   'GAME_IN_PROGRESS',
   'NOT_HOST',
   'NOT_DRAWER',
+  'NOT_IMPLEMENTED',
   'INTERNAL',
 ]);
 export type ErrorCode = z.infer<typeof ErrorCode>;
