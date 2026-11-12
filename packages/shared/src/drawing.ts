@@ -8,6 +8,8 @@ export const DRAWING_LIMITS = {
   maxBrushSize: 0.1,
 } as const;
 
+export const CANVAS_ASPECT_RATIO = 4 / 3;
+
 export const Unit = z.number().min(0).max(1);
 
 export const Point = z.tuple([Unit, Unit]);
