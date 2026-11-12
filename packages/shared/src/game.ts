@@ -10,15 +10,26 @@ export const RoomCode = z
 export type RoomCode = z.infer<typeof RoomCode>;
 
 export const GameSettings = z.object({
-  rounds: z.int().min(1).max(10).default(3),
-  drawTimeS: z.int().min(30).max(240).default(80),
-  maxPlayers: z.int().min(2).max(12).default(8),
-  hints: z.int().min(0).max(5).default(2),
-  packId: z.uuid().nullable().default(null),
-  visibility: z.enum(['public', 'private']).default('private'),
+  rounds: z.int().min(1).max(10),
+  drawTimeS: z.int().min(30).max(240),
+  maxPlayers: z.int().min(2).max(12),
+  hints: z.int().min(0).max(5),
+  packId: z.uuid().nullable(),
+  visibility: z.enum(['public', 'private']),
 });
 export type GameSettings = z.infer<typeof GameSettings>;
-export type GameSettingsInput = z.input<typeof GameSettings>;
+
+export const GameSettingsPatch = GameSettings.partial();
+export type GameSettingsPatch = z.infer<typeof GameSettingsPatch>;
+
+export const DEFAULT_GAME_SETTINGS: GameSettings = {
+  rounds: 3,
+  drawTimeS: 80,
+  maxPlayers: 8,
+  hints: 2,
+  packId: null,
+  visibility: 'private',
+};
 
 export const GamePhase = z.enum(['lobby', 'choosing', 'drawing', 'turn_end', 'game_end']);
 export type GamePhase = z.infer<typeof GamePhase>;

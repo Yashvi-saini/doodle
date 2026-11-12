@@ -4,6 +4,7 @@ import { StrokeEnd, StrokePoints, StrokeRemoved, StrokeStart } from './drawing.j
 import {
   ChatMessage,
   GameSettings,
+  GameSettingsPatch,
   LeaderboardEntry,
   Player,
   RoomCode,
@@ -15,9 +16,9 @@ import {
 export const SocketAuth = z.object({ token: z.string().min(1) });
 export type SocketAuth = z.infer<typeof SocketAuth>;
 
-export const RoomCreatePayload = z.object({ settings: GameSettings.partial().default({}) });
+export const RoomCreatePayload = z.object({ settings: GameSettingsPatch.default({}) });
 export const RoomJoinPayload = z.object({ code: RoomCode });
-export const RoomUpdateSettingsPayload = z.object({ settings: GameSettings.partial() });
+export const RoomUpdateSettingsPayload = z.object({ settings: GameSettingsPatch });
 export const RoomKickPayload = z.object({ userId: UserId });
 export const TurnChooseWordPayload = z.object({ index: z.int().min(0).max(2) });
 export const ChatSendPayload = z.object({ text: z.string().trim().min(1).max(100) });

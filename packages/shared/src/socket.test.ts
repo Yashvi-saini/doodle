@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { ackResult } from './common.js';
-import { GameSettings, RoomCode } from './game.js';
-import { clientEvents, RoomCreatePayload, serverEvents } from './socket.js';
+import { DEFAULT_GAME_SETTINGS, GameSettings, RoomCode } from './game.js';
+import {
+  clientEvents,
+  RoomCreatePayload,
+  RoomUpdateSettingsPayload,
+  serverEvents,
+} from './socket.js';
 
 describe('event maps', () => {
   it('uses namespaced event names', () => {
@@ -30,23 +35,31 @@ describe('RoomCode', () => {
 });
 
 describe('GameSettings', () => {
-  it('fills defaults', () => {
-    expect(GameSettings.parse({})).toEqual({
-      rounds: 3,
-      drawTimeS: 80,
-      maxPlayers: 8,
-      hints: 2,
-      packId: null,
-      visibility: 'private',
-    });
+  it('has valid defaults', () => {
+    expect(GameSettings.parse(DEFAULT_GAME_SETTINGS)).toEqual(DEFAULT_GAME_SETTINGS);
   });
 
   it('lets room:create omit settings', () => {
     expect(RoomCreatePayload.parse({})).toEqual({ settings: {} });
   });
 
+  it('keeps a settings patch partial so unspecified fields are not reset', () => {
+    expect(RoomUpdateSettingsPayload.parse({ settings: { rounds: 5 } })).toEqual({
+      settings: { rounds: 5 },
+    });
+    expect(RoomCreatePayload.parse({ settings: { hints: 0 } })).toEqual({
+      settings: { hints: 0 },
+    });
+  });
+
+  it('requires every field in full settings', () => {
+    expect(GameSettings.safeParse({ rounds: 3 }).success).toBe(false);
+  });
+
   it('rejects out-of-range values', () => {
-    expect(GameSettings.safeParse({ maxPlayers: 50 }).success).toBe(false);
+    expect(GameSettings.safeParse({ ...DEFAULT_GAME_SETTINGS, maxPlayers: 50 }).success).toBe(
+      false,
+    );
   });
 });
 
@@ -54,7 +67,7 @@ describe('ackResult', () => {
   const schema = ackResult(GameSettings);
 
   it('parses success results', () => {
-    const parsed = schema.parse({ ok: true, data: {} });
+    const parsed = schema.parse({ ok: true, data: DEFAULT_GAME_SETTINGS });
     expect(parsed.ok).toBe(true);
   });
 
