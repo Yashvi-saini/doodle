@@ -75,15 +75,19 @@ export function registerRoomHandlers({ io, socket, rooms, game, logger }: Handle
   socket.on('disconnect', () => {
     const code = socket.data.roomCode;
     if (!code) return;
-    rooms
-      .disconnect(user.userId, code)
-      .then((room) => {
-        const player = room && findPlayer(room, user.userId);
-        if (player) {
-          io.to(code).emit('room:player_updated', player);
-        }
-        return game.playerGone(code, user.userId);
-      })
-      .catch((error: unknown) => logger.error({ err: error, code }, 'disconnect cleanup failed'));
+    void (async () => {
+      // A dropped connection is often noticed only after the client has already
+      // rejoined on a new socket. The player is still here in that case.
+      const siblings = await io.in(userChannel(user.userId)).fetchSockets();
+      if (siblings.some((other) => other.id !== socket.id && other.rooms.has(code))) return;
+      const room = await rooms.disconnect(user.userId, code);
+      const player = room && findPlayer(room, user.userId);
+      if (player) {
+        io.to(code).emit('room:player_updated', player);
+      }
+      await game.playerGone(code, user.userId);
+    })().catch((error: unknown) =>
+      logger.error({ err: error, code }, 'disconnect cleanup failed'),
+    );
   });
 }
