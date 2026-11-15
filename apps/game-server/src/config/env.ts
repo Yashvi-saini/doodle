@@ -16,7 +16,8 @@ const EnvSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   HOST: z.string().default('0.0.0.0'),
   GAME_SERVER_PORT: z.coerce.number().int().min(1).max(65535).default(4001),
-  REDIS_URL: z.url(),
+  /** Leave unset (or start with --memory) to keep rooms in memory, no Redis needed. */
+  REDIS_URL: z.url().optional(),
   CORS_ORIGINS: csv,
   JWT_SECRET: z.string().min(32),
   ROOM_TTL_S: z.coerce
