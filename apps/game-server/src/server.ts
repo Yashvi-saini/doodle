@@ -43,7 +43,9 @@ const io = createGameServer(httpServer, {
     ? createRedisRoomRepository(redis, { ttlSeconds: config.ROOM_TTL_S })
     : createMemoryRoomRepository(),
   verifier:
-    config.NODE_ENV === 'production' ? createRejectingTokenVerifier() : createDevTokenVerifier(),
+    config.NODE_ENV !== 'production' || config.ALLOW_DEV_TOKENS
+      ? createDevTokenVerifier()
+      : createRejectingTokenVerifier(),
 });
 if (redis && subscriber) {
   io.adapter(createAdapter(redis, subscriber));
