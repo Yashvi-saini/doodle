@@ -23,6 +23,18 @@ jobs:
       EXPO_PUBLIC_GAME_SERVER_URL: ${{ vars.GAME_SERVER_URL }}
 
     steps:
+      # The native build (Skia, Reanimated, Worklets) needs more memory and disk than the
+      # standard private-repo runner has spare, so add swap and drop toolchains we don't use.
+      - name: Free disk space and add swap
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+          sudo fallocate -l 8G /extra-swap
+          sudo chmod 600 /extra-swap
+          sudo mkswap /extra-swap
+          sudo swapon /extra-swap
+          free -h
+          df -h /
+
       - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v6
@@ -52,7 +64,11 @@ jobs:
       # 64-bit ARM covers practically every phone in use and halves build time and APK size.
       - name: Build release APK
         working-directory: apps/mobile/android
-        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
+        run: >-
+          ./gradlew assembleRelease
+          -PreactNativeArchitectures=arm64-v8a
+          --no-daemon --max-workers=2
+          -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m"
 
       - name: Rename APK
         run: cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk doodle-${{ github.ref_name }}.apk
