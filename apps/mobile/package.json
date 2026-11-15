@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "expo start --dev-client",
     "android": "expo run:android",
+    "apk": "expo prebuild --platform android --no-install && cd android && gradlew assembleRelease",
     "ios": "expo run:ios",
     "prebuild": "expo prebuild",
     "lint": "eslint .",
