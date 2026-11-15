@@ -5,12 +5,32 @@ import { MIN_POINT_DISTANCE_PX } from '../constants';
 import { type CanvasSize, clamp, isFarEnough } from '../lib/geometry';
 
 export type StrokeEndHandler = (coords: number[], generation: number) => void;
+/** Receives the pixel coords added since the previous call, while the stroke is in progress. */
+export type StrokeProgressHandler = (coords: number[], generation: number) => void;
 
-export function useDrawingGesture(size: SharedValue<CanvasSize>, onStrokeEnd: StrokeEndHandler) {
+/** Coords (x and y each count) to collect before streaming a chunk: 8 points. */
+const PROGRESS_CHUNK = 16;
+
+const noop: StrokeProgressHandler = () => undefined;
+
+export interface DrawingGestureOptions {
+  enabled?: boolean;
+  onStrokeProgress?: StrokeProgressHandler;
+}
+
+export function useDrawingGesture(
+  size: SharedValue<CanvasSize>,
+  onStrokeEnd: StrokeEndHandler,
+  { enabled = true, onStrokeProgress }: DrawingGestureOptions = {},
+) {
   const livePoints = useSharedValue<number[]>([]);
   const generation = useSharedValue(0);
+  const sent = useSharedValue(0);
+  const streams = onStrokeProgress !== undefined;
+  const onProgress = onStrokeProgress ?? noop;
 
   const gesture = usePanGesture({
+    enabled,
     maxPointers: 1,
     minDistance: 0,
     shouldCancelWhenOutside: false,
@@ -18,6 +38,7 @@ export function useDrawingGesture(size: SharedValue<CanvasSize>, onStrokeEnd: St
       'worklet';
       const { width, height } = size.value;
       generation.value += 1;
+      sent.value = 0;
       livePoints.value = [clamp(event.x, 0, width), clamp(event.y, 0, height)];
     },
     onUpdate: (event) => {
@@ -40,6 +61,13 @@ export function useDrawingGesture(size: SharedValue<CanvasSize>, onStrokeEnd: St
         points.push(x, y);
         return points;
       });
+      if (streams) {
+        const points = livePoints.value;
+        if (points.length - sent.value >= PROGRESS_CHUNK) {
+          scheduleOnRN(onProgress, points.slice(sent.value), generation.value);
+          sent.value = points.length;
+        }
+      }
     },
     onFinalize: () => {
       'worklet';
