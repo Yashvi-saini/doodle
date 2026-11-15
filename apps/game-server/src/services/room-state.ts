@@ -10,6 +10,10 @@ export interface Identity {
 export interface RoomState extends RoomSnapshot {
   word: string | null;
   createdAt: number;
+  /** Server-only game fields, stripped from snapshots. */
+  wordChoices: string[];
+  drawnThisRound: string[];
+  turnScores: Record<string, number>;
 }
 
 export function newRoom(
@@ -32,6 +36,9 @@ export function newRoom(
     strokes: [] as Stroke[],
     word: null,
     createdAt: now,
+    wordChoices: [],
+    drawnThisRound: [],
+    turnScores: {},
   };
 }
 
@@ -47,7 +54,14 @@ export function newPlayer(identity: Identity): Player {
 }
 
 export function toSnapshot(room: RoomState): RoomSnapshot {
-  const { word: _word, createdAt: _createdAt, ...snapshot } = room;
+  const {
+    word: _word,
+    createdAt: _createdAt,
+    wordChoices: _wordChoices,
+    drawnThisRound: _drawnThisRound,
+    turnScores: _turnScores,
+    ...snapshot
+  } = room;
   return snapshot;
 }
 
