@@ -52,6 +52,23 @@ pnpm --filter @doodle/api dev            # http://localhost:4000/health
 pnpm --filter @doodle/game-server dev    # http://localhost:4001/health
 ```
 
+## Testing a game
+
+Automated checks: `pnpm test` runs the Vitest suites, including an end-to-end game over real sockets in `apps/game-server/src/app.test.ts` (create, join, choose a word, draw, guess, score, finish).
+
+To play it yourself you need two players, which can be two phones or a phone and an emulator:
+
+1. Start the server: `pnpm --filter @doodle/game-server dev:memory`.
+2. Start the app on each device with `pnpm --filter @doodle/mobile android` (first build takes a while) or `pnpm --filter @doodle/mobile dev` afterwards.
+3. Both devices must reach the server. On the same Wi-Fi as your PC, tap the server line at the bottom of the home screen and enter `http://<your-pc-ip>:4001` (find the IP with `ipconfig`). Allow Node through Windows Firewall if asked.
+4. Enter a name, tap **Create a room** on one device and **Join** with the code on the other, then **Start game**.
+
+## Sharing an APK
+
+`pnpm --filter @doodle/mobile apk` builds `apps/mobile/android/app/build/outputs/apk/release/app-release.apk`, a standalone app that doesn't need Metro. Send that file to friends; they enable _Install unknown apps_ and open it. It is signed with the debug keystore, which is fine for sharing but not for the Play Store.
+
+Friends on other networks need a server they can reach. Deploy `apps/game-server` anywhere that runs Node (Render, Railway, Fly.io and so on) with `node dist/server.js --memory` after `pnpm build`, set `JWT_SECRET` and `CORS_ORIGINS`, then either enter that URL on the home screen or bake it in by creating `apps/mobile/.env` with `EXPO_PUBLIC_GAME_SERVER_URL=https://your-server.example` before running `apk`.
+
 ## Everyday commands
 
 | Command                                | What it does                                              |
