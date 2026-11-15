@@ -1,6 +1,7 @@
 import type { ClientToServerEvents, ServerToClientEvents } from '@doodle/shared';
 import type { Server, Socket } from 'socket.io';
 import type { Logger } from '../lib/logger.js';
+import type { GameService } from '../services/game.service.js';
 import type { RoomService } from '../services/room.service.js';
 import type { Identity } from '../services/room-state.js';
 
@@ -29,6 +30,7 @@ export interface HandlerContext {
   io: GameServer;
   socket: GameSocket;
   rooms: RoomService;
+  game: GameService;
   logger: Logger;
 }
 

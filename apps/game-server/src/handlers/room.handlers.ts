@@ -1,9 +1,9 @@
 import { GameError } from '../lib/errors.js';
-import { findPlayer, toSnapshot } from '../services/room-state.js';
+import { findPlayer } from '../services/room-state.js';
 import { handle } from './handle.js';
 import { type HandlerContext, userChannel } from './types.js';
 
-export function registerRoomHandlers({ io, socket, rooms, logger }: HandlerContext): void {
+export function registerRoomHandlers({ io, socket, rooms, game, logger }: HandlerContext): void {
   const user = socket.data.user;
 
   const currentRoom = (): string => {
@@ -24,6 +24,7 @@ export function registerRoomHandlers({ io, socket, rooms, logger }: HandlerConte
     if (room && hostChanged) {
       io.to(code).emit('room:host_changed', { userId: room.hostId });
     }
+    await game.playerGone(code, user.userId);
   };
 
   handle(socket, logger, 'room:create', async ({ settings }) => {
@@ -31,7 +32,7 @@ export function registerRoomHandlers({ io, socket, rooms, logger }: HandlerConte
     const room = await rooms.create(user, settings);
     await socket.join(room.code);
     socket.data.roomCode = room.code;
-    return toSnapshot(room);
+    return game.snapshot(room);
   });
 
   handle(socket, logger, 'room:join', async ({ code }) => {
@@ -46,7 +47,8 @@ export function registerRoomHandlers({ io, socket, rooms, logger }: HandlerConte
     if (player) {
       socket.to(code).emit(isNewPlayer ? 'room:player_joined' : 'room:player_updated', player);
     }
-    return toSnapshot(room);
+    game.resendPrivateState(room, user.userId);
+    return game.snapshot(room);
   });
 
   handle(socket, logger, 'room:leave', async () => {
@@ -66,6 +68,7 @@ export function registerRoomHandlers({ io, socket, rooms, logger }: HandlerConte
     io.to(userChannel(userId)).emit('room:kicked', { reason: 'Removed by the host' });
     io.in(userChannel(userId)).socketsLeave(code);
     io.to(code).emit('room:player_left', { userId });
+    await game.playerGone(code, userId);
     return {};
   });
 
@@ -79,6 +82,7 @@ export function registerRoomHandlers({ io, socket, rooms, logger }: HandlerConte
         if (player) {
           io.to(code).emit('room:player_updated', player);
         }
+        return game.playerGone(code, user.userId);
       })
       .catch((error: unknown) => logger.error({ err: error, code }, 'disconnect cleanup failed'));
   });
