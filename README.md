@@ -65,7 +65,13 @@ To play it yourself you need two players, which can be two phones or a phone and
 
 ## Sharing an APK
 
-`pnpm --filter @doodle/mobile apk` builds `apps/mobile/android/app/build/outputs/apk/release/app-release.apk`, a standalone app that doesn't need Metro. Send that file to friends; they enable _Install unknown apps_ and open it. It is signed with the debug keystore, which is fine for sharing but not for the Play Store.
+The **Release APK** workflow builds a standalone APK (no Metro needed) and attaches it to a GitHub Release, which gives you a public download link:
+
+1. In the repo's **Settings → Secrets and variables → Actions → Variables**, add `GAME_SERVER_URL` with the public server URL (see below) so the app connects to it by default.
+2. Tag and push: `git tag v0.1.0 && git push origin v0.1.0`.
+3. After about 15 minutes the release appears under **Releases** with `doodle-v0.1.0.apk`. Send that link; friends enable _Install unknown apps_ and open it.
+
+To build the same APK locally, `pnpm --filter @doodle/mobile apk` writes `apps/mobile/android/app/build/outputs/apk/release/app-release.apk`. Either way it is signed with the debug keystore, which is fine for sharing but not for the Play Store.
 
 Friends on other networks need a server they can reach, see below. Enter its URL on the home screen, or bake it in by creating `apps/mobile/.env` with `EXPO_PUBLIC_GAME_SERVER_URL=https://your-server.example` before running `apk`.
 
