@@ -149,6 +149,21 @@ describe('rooms', () => {
     expect(await updated).toMatchObject({ userId: BOB, isConnected: false });
   });
 
+  it('keeps a player connected when a stale socket drops after they rejoined', async () => {
+    const alice = await connected(`dev:${ALICE}:Alice`);
+    const bob = await connected(`dev:${BOB}:Bob`);
+    const { code } = snapshotOf(await alice.emitWithAck('room:create', { settings: {} }));
+    await bob.emitWithAck('room:join', { code });
+
+    const bobAgain = await connected(`dev:${BOB}:Bob`);
+    await bobAgain.emitWithAck('room:join', { code });
+    bob.disconnect();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const { players } = snapshotOf(await alice.emitWithAck('room:join', { code }));
+    expect(players.find((player) => player.userId === BOB)).toMatchObject({ isConnected: true });
+  });
+
   it('lets the host kick a player', async () => {
     const alice = await connected(`dev:${ALICE}:Alice`);
     const bob = await connected(`dev:${BOB}:Bob`);
