@@ -67,7 +67,11 @@ To play it yourself you need two players, which can be two phones or a phone and
 
 `pnpm --filter @doodle/mobile apk` builds `apps/mobile/android/app/build/outputs/apk/release/app-release.apk`, a standalone app that doesn't need Metro. Send that file to friends; they enable _Install unknown apps_ and open it. It is signed with the debug keystore, which is fine for sharing but not for the Play Store.
 
-Friends on other networks need a server they can reach. Deploy `apps/game-server` anywhere that runs Node (Render, Railway, Fly.io and so on) with `node dist/server.js --memory` after `pnpm build`, set `JWT_SECRET` and `CORS_ORIGINS`, then either enter that URL on the home screen or bake it in by creating `apps/mobile/.env` with `EXPO_PUBLIC_GAME_SERVER_URL=https://your-server.example` before running `apk`.
+Friends on other networks need a server they can reach, see below. Enter its URL on the home screen, or bake it in by creating `apps/mobile/.env` with `EXPO_PUBLIC_GAME_SERVER_URL=https://your-server.example` before running `apk`.
+
+## Deploying the game server
+
+The repo has a `Dockerfile` for the game server and a `render.yaml` blueprint. On [render.com](https://render.com): **New → Blueprint**, pick this repo, **Apply**. The free plan is enough for a demo (it sleeps after 15 minutes idle, so the first connection takes about a minute). Any host that runs a Dockerfile works the same way; set `NODE_ENV=production`, a 32+ character `JWT_SECRET`, and `ALLOW_DEV_TOKENS=true` until real auth exists. Leave `REDIS_URL` unset to keep rooms in memory.
 
 ## Everyday commands
 
