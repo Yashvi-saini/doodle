@@ -5,7 +5,7 @@
 <h1 align="center">Doodle</h1>
 
 <p align="center">
-  A real-time multiplayer drawing and guessing game for Android.<br />
+  A real-time multiplayer drawing and guessing game.<br />
   One player draws, everyone else races to guess the word.
 </p>
 
