@@ -13,9 +13,9 @@ Multiplayer doodle guessing game. One player draws, everyone else guesses. TypeS
 
 ## Status
 
-**Phase 1: solo drawing canvas.** Brush colours, four brush sizes, eraser, undo/redo and clear. Clear can be undone too. Points are stored as 0–1 fractions of a 4:3 canvas, so a drawing looks the same on every screen size.
+**Phase 2: multiplayer game.** Create a room, share the 6-letter code, and play: the drawer picks one of three words, draws with a live-streamed Skia canvas, and everyone else guesses in chat. Faster guesses score more, the drawer scores per correct guess, letters are revealed as hints over the turn, and a leaderboard is shown at the end. Guesses that are one letter off get a "close" nudge. Drawers can undo and clear; disconnects and reconnects are handled.
 
-The API and game server are working skeletons. Rooms (create, join, leave, settings, kick) and word-pack reads are implemented and tested. Auth, gameplay and stroke sync return `NOT_IMPLEMENTED` until later phases.
+The solo sketchpad from phase 1 is still available from the home screen. Rooms (create, join, leave, settings, kick) are server-authoritative. The REST API's auth and profile routes still return `NOT_IMPLEMENTED`; players currently identify with a dev token.
 
 ## Requirements
 
@@ -23,7 +23,19 @@ The API and game server are working skeletons. Rooms (create, join, leave, setti
 - Docker Desktop, for Postgres 18 and Redis 8
 - For the mobile app: Android Studio, JDK 17 and an Android phone or emulator (see below)
 
-## Getting started
+## Quick start (no Docker)
+
+Enough to play a game on two phones:
+
+```sh
+pnpm install
+pnpm --filter @doodle/game-server dev:memory   # rooms kept in memory, no Redis needed
+pnpm --filter @doodle/mobile android           # see "Running the mobile app" below
+```
+
+The app connects to port 4001 on the machine running Metro. If the phone can't reach it, open the server field on the home screen and enter `http://<your-pc-ip>:4001`.
+
+## Full setup (Postgres + Redis)
 
 ```sh
 pnpm install
@@ -100,4 +112,6 @@ Rebuild with `android` again only after adding or upgrading a native library. Ja
 - **Shared contract.** `packages/shared/src/socket.ts` maps every client event to its payload schema and optional ack schema. The Socket.IO `ClientToServerEvents` / `ServerToClientEvents` types are derived from that map, and the server validates every incoming payload against it before a handler runs.
 - **Game server layers.** `handlers` validate and route socket events. `services` hold the rules: host-only actions, room capacity, host hand-over. `repositories` own Redis state. Room updates take a per-room Redis lock, so concurrent joins can't overfill a room.
 - **API layers.** `routes → service → repository`, with Zod schemas from `@doodle/shared` for request validation and response serialisation.
+- **Game loop.** `services/game.service.ts` drives a turn through `choosing → drawing → turn_end` with timers for the word choice, hint reveals and the turn itself. Room state lives in the repository; the current turn's strokes live in process memory so the drawer never takes the room lock. Guess matching, hints and scoring are pure functions in `game-rules.ts`.
+- **Mobile game state.** `features/game/store/game.store.ts` owns the socket and applies every server event to a Zustand store; screens are chosen from the room phase. The drawer's strokes are streamed in 8-point chunks via `draw:stroke_points` and committed on release.
 - **Canvas.** The stroke being drawn is built on the UI thread: Gesture Handler 3 worklets feed a Skia `usePathValue`. On release, its points are normalised to 0–1, checked against the shared `Stroke` schema and committed to a Zustand store with undo/redo history. The eraser draws with `blendMode="clear"` inside a Skia layer.

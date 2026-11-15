@@ -108,7 +108,7 @@ export function createRoomService({
     updateSettings(userId: string, code: string, patch: GameSettingsPatch): Promise<RoomState> {
       return mustUpdate(code, (current) => {
         assertHost(current, userId);
-        if (current.phase !== 'lobby') {
+        if (current.phase !== 'lobby' && current.phase !== 'game_end') {
           throw new GameError('GAME_IN_PROGRESS', 'Settings can only change in the lobby');
         }
         const settings = { ...current.settings, ...patch };
