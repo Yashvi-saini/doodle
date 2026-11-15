@@ -7,8 +7,9 @@ const GAME_SERVER_PORT = 4001;
  * server, so the bundle URL's host is the right host. EXPO_PUBLIC_GAME_SERVER_URL overrides it.
  */
 export function defaultServerUrl(): string {
-  const env = process.env as Record<string, string | undefined>;
-  const configured = env.EXPO_PUBLIC_GAME_SERVER_URL;
+  // Expo inlines EXPO_PUBLIC_* at build time only for this exact `process.env.NAME` form.
+  // Reading it through a variable or destructuring leaves it undefined in release builds.
+  const configured = process.env.EXPO_PUBLIC_GAME_SERVER_URL as string | undefined;
   if (configured) return configured;
 
   const modules = NativeModules as { SourceCode?: { scriptURL?: unknown } };
