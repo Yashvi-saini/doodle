@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../../components/Button';
 import { TextField } from '../../../components/TextField';
@@ -20,12 +12,10 @@ interface HomeScreenProps {
 
 export function HomeScreen({ onSolo }: HomeScreenProps) {
   const name = useGameStore((state) => state.name);
-  const serverUrl = useGameStore((state) => state.serverUrl);
   const error = useGameStore((state) => state.error);
-  const connection = useGameStore((state) => state.connection);
+  const waking = useGameStore((state) => state.waking);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState<'create' | 'join' | null>(null);
-  const [showServer, setShowServer] = useState(false);
 
   const ready = name.trim().length > 0;
   const run = async (which: 'create' | 'join') => {
@@ -89,6 +79,12 @@ export function HomeScreen({ onSolo }: HomeScreenProps) {
             />
           </View>
 
+          {waking && busy ? (
+            <Text style={styles.waking} accessibilityLiveRegion="polite">
+              Waking up the game server. The first game can take up to a minute to start…
+            </Text>
+          ) : null}
+
           {error ? (
             <Text style={styles.error} accessibilityLiveRegion="polite">
               {error}
@@ -96,23 +92,6 @@ export function HomeScreen({ onSolo }: HomeScreenProps) {
           ) : null}
 
           <Button label="Practice solo" variant="ghost" onPress={onSolo} />
-
-          <Pressable onPress={() => setShowServer((value) => !value)} hitSlop={8}>
-            <Text style={styles.serverToggle}>
-              {connection === 'online' ? '● ' : '○ '}
-              {serverUrl}
-            </Text>
-          </Pressable>
-          {showServer ? (
-            <TextField
-              label="Game server"
-              value={serverUrl}
-              onChangeText={gameActions.setServerUrl}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-            />
-          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -138,5 +117,5 @@ const styles = StyleSheet.create({
   joinButton: { minWidth: 96 },
   codeInput: { letterSpacing: 4, fontWeight: '800' },
   error: { color: colors.accent, fontWeight: '700', textAlign: 'center' },
-  serverToggle: { textAlign: 'center', color: colors.muted, fontSize: 12, marginTop: 8 },
+  waking: { color: colors.muted, fontWeight: '600', textAlign: 'center' },
 });

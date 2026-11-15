@@ -14,7 +14,7 @@ import {
 import { io, type Socket } from 'socket.io-client';
 import { create } from 'zustand';
 import { uuidV4 } from '../../../lib/uuid';
-import { defaultServerUrl } from '../lib/server-url';
+import { SERVER_URL } from '../lib/server-url';
 
 type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -27,8 +27,9 @@ export interface TurnResult {
 export interface GameState {
   userId: string;
   name: string;
-  serverUrl: string;
   connection: 'offline' | 'connecting' | 'online' | 'reconnecting';
+  /** The first connection is slow, most likely because the free server is waking up. */
+  waking: boolean;
   error: string | null;
 
   room: RoomSnapshot | null;
@@ -61,8 +62,8 @@ let socket: GameSocket | null = null;
 export const useGameStore = create<GameState>()(() => ({
   userId: uuidV4(),
   name: '',
-  serverUrl: defaultServerUrl(),
   connection: 'offline',
+  waking: false,
   error: null,
   ...initialRoomState,
 }));
@@ -105,11 +106,9 @@ function bindEvents(client: GameSocket) {
     }
   });
   client.io.on('reconnect_attempt', () => set({ connection: 'reconnecting' }));
-  client.on('connect_error', (error) => {
-    set({
-      connection: get().room ? 'reconnecting' : 'offline',
-      error: `Can't reach the game server (${error.message})`,
-    });
+  // Socket.IO keeps retrying on its own; waitForConnection decides when to give up.
+  client.on('connect_error', () => {
+    set({ connection: get().room ? 'reconnecting' : 'connecting' });
   });
 
   client.on('room:state', (room) => set({ room, live: {} }));
@@ -215,17 +214,21 @@ function leaveLocally(reason?: string) {
   set({ ...initialRoomState, error: reason ?? null });
 }
 
+/** A sleeping free-tier server takes up to about a minute to wake on the first request. */
+const CONNECT_TIMEOUT_MS = 75_000;
+const SLOW_CONNECT_MS = 4_000;
+
 function connect(): GameSocket {
-  const { serverUrl, userId, name } = get();
+  const { userId, name } = get();
   if (socket?.connected) return socket;
   socket?.removeAllListeners();
   socket?.disconnect();
 
   set({ connection: 'connecting', error: null });
-  const client: GameSocket = io(serverUrl, {
+  const client: GameSocket = io(SERVER_URL, {
     auth: { token: `dev:${userId}:${name.trim()}` },
     transports: ['websocket'],
-    timeout: 8000,
+    timeout: 10_000,
   });
   bindEvents(client);
   socket = client;
@@ -235,16 +238,24 @@ function connect(): GameSocket {
 function waitForConnection(client: GameSocket): Promise<void> {
   if (client.connected) return Promise.resolve();
   return new Promise((resolve, reject) => {
+    const slow = setTimeout(() => set({ waking: true }), SLOW_CONNECT_MS);
+    const giveUp = setTimeout(() => {
+      cleanup();
+      client.disconnect();
+      set({ connection: 'offline' });
+      reject(new Error("Can't reach the game server. Check your internet and try again."));
+    }, CONNECT_TIMEOUT_MS);
     const onConnect = () => {
-      client.off('connect_error', onError);
+      cleanup();
       resolve();
     };
-    const onError = (error: Error) => {
+    const cleanup = () => {
+      clearTimeout(slow);
+      clearTimeout(giveUp);
       client.off('connect', onConnect);
-      reject(new Error(`Can't reach the game server at ${get().serverUrl} (${error.message})`));
+      set({ waking: false });
     };
-    client.once('connect', onConnect);
-    client.once('connect_error', onError);
+    client.on('connect', onConnect);
   });
 }
 
@@ -270,7 +281,6 @@ const requireSocket = (): GameSocket => {
 
 export const gameActions = {
   setName: (name: string) => set({ name }),
-  setServerUrl: (serverUrl: string) => set({ serverUrl: serverUrl.trim() }),
   clearError: () => set({ error: null }),
 
   createRoom: () =>

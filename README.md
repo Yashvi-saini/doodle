@@ -33,7 +33,7 @@ pnpm --filter @doodle/game-server dev:memory   # rooms kept in memory, no Redis 
 pnpm --filter @doodle/mobile android           # see "Running the mobile app" below
 ```
 
-The app connects to port 4001 on the machine running Metro. If the phone can't reach it, open the server field on the home screen and enter `http://<your-pc-ip>:4001`.
+Development builds connect to port 4001 on the machine running Metro. Release builds (the shared APK) always connect to the public server; see [Sharing an APK](#sharing-an-apk).
 
 ## Full setup (Postgres + Redis)
 
@@ -60,20 +60,21 @@ To play it yourself you need two players, which can be two phones or a phone and
 
 1. Start the server: `pnpm --filter @doodle/game-server dev:memory`.
 2. Start the app on each device with `pnpm --filter @doodle/mobile android` (first build takes a while) or `pnpm --filter @doodle/mobile dev` afterwards.
-3. Both devices must reach the server. On the same Wi-Fi as your PC, tap the server line at the bottom of the home screen and enter `http://<your-pc-ip>:4001` (find the IP with `ipconfig`). Allow Node through Windows Firewall if asked.
+3. Both devices must be on the same Wi-Fi as your PC, since the app reaches the server through the PC's address. Allow Node through Windows Firewall if asked.
 4. Enter a name, tap **Create a room** on one device and **Join** with the code on the other, then **Start game**.
 
 ## Sharing an APK
 
 The **Release APK** workflow builds a standalone APK (no Metro needed) and attaches it to a GitHub Release, which gives you a public download link:
 
-1. In the repo's **Settings → Secrets and variables → Actions → Variables**, add `GAME_SERVER_URL` with the public server URL (see below) so the app connects to it by default.
-2. Tag and push: `git tag v0.1.0 && git push origin v0.1.0`.
-3. After about 15 minutes the release appears under **Releases** with `doodle-v0.1.0.apk`. Send that link; friends enable _Install unknown apps_ and open it.
+1. Tag and push: `git tag v0.1.0 && git push origin v0.1.0`. Or run the workflow by hand from the **Actions** tab and download the `doodle-apk` artifact.
+2. After about 30 minutes the release appears under **Releases** with `doodle-v0.1.0.apk`. Send that link; friends enable _Install unknown apps_ and open it.
+
+The APK includes both 32-bit and 64-bit ARM code, so it installs on budget phones too. Release builds connect to the server in `PRODUCTION_SERVER_URL` (`apps/mobile/src/features/game/lib/server-url.ts`); to point a build somewhere else, set the repository variable `GAME_SERVER_URL` (**Settings → Secrets and variables → Actions → Variables**).
 
 To build the same APK locally, `pnpm --filter @doodle/mobile apk` writes `apps/mobile/android/app/build/outputs/apk/release/app-release.apk`. Either way it is signed with the debug keystore, which is fine for sharing but not for the Play Store.
 
-Friends on other networks need a server they can reach, see below. Enter its URL on the home screen, or bake it in by creating `apps/mobile/.env` with `EXPO_PUBLIC_GAME_SERVER_URL=https://your-server.example` before running `apk`.
+For a local build that targets a different server, create `apps/mobile/.env` with `EXPO_PUBLIC_GAME_SERVER_URL=https://your-server.example` before running `apk`.
 
 ## Deploying the game server
 
