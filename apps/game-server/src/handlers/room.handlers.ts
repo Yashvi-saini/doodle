@@ -86,8 +86,6 @@ export function registerRoomHandlers({ io, socket, rooms, game, logger }: Handle
         io.to(code).emit('room:player_updated', player);
       }
       await game.playerGone(code, user.userId);
-    })().catch((error: unknown) =>
-      logger.error({ err: error, code }, 'disconnect cleanup failed'),
-    );
+    })().catch((error: unknown) => logger.error({ err: error, code }, 'disconnect cleanup failed'));
   });
 }
