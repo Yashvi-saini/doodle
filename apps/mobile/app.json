@@ -6,12 +6,18 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "backgroundColor": "#F4F1EA",
     "ios": {
       "bundleIdentifier": "com.doodlegame.app",
       "supportsTablet": true
     },
     "android": {
-      "package": "com.doodlegame.app"
+      "package": "com.doodlegame.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FF5A36"
+      }
     },
     "plugins": ["expo-status-bar"]
   }
