@@ -61,12 +61,12 @@ jobs:
         working-directory: apps/mobile
         run: pnpm exec expo prebuild --platform android --no-install
 
-      # 64-bit ARM covers practically every phone in use and halves build time and APK size.
+      # Both ARM ABIs: many budget phones (e.g. Redmi 9A) only run 32-bit apps.
       - name: Build release APK
         working-directory: apps/mobile/android
         run: >-
           ./gradlew assembleRelease
-          -PreactNativeArchitectures=arm64-v8a
+          -PreactNativeArchitectures=armeabi-v7a,arm64-v8a
           --no-daemon --max-workers=2
           -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m"
 
