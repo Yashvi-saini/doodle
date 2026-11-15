@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../../../theme/colors';
 import { BrushSizePicker } from '../components/BrushSizePicker';
@@ -6,7 +6,11 @@ import { ColorPalette } from '../components/ColorPalette';
 import { DrawingCanvas } from '../components/DrawingCanvas';
 import { Toolbar } from '../components/Toolbar';
 
-export function CanvasScreen() {
+interface CanvasScreenProps {
+  onBack?: () => void;
+}
+
+export function CanvasScreen({ onBack }: CanvasScreenProps) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom', 'left', 'right']}>
       <View style={styles.content}>
@@ -15,6 +19,11 @@ export function CanvasScreen() {
             Doodle
           </Text>
           <Text style={styles.subtitle}>Solo sketchpad</Text>
+          {onBack ? (
+            <Pressable onPress={onBack} hitSlop={8} style={styles.back} accessibilityRole="button">
+              <Text style={styles.backLabel}>Back</Text>
+            </Pressable>
+          ) : null}
         </View>
 
         <DrawingCanvas />
@@ -43,5 +52,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
   title: { fontSize: 30, fontWeight: '900', color: colors.ink, letterSpacing: -0.5 },
   subtitle: { fontSize: 15, fontWeight: '600', color: colors.muted },
+  back: { marginLeft: 'auto' },
+  backLabel: { fontSize: 16, fontWeight: '800', color: colors.accent },
   controls: { gap: 14 },
 });
