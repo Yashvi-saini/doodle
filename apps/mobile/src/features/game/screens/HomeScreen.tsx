@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import logo from '../../../../assets/logo.png';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../../components/Button';
 import { TextField } from '../../../components/TextField';
@@ -33,6 +42,7 @@ export function HomeScreen({ onSolo }: HomeScreenProps) {
       >
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.hero}>
+            <Image source={logo} style={styles.logo} accessibilityIgnoresInvertColors />
             <Text style={styles.title} accessibilityRole="header">
               Doodle
             </Text>
@@ -111,6 +121,7 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   hero: { alignItems: 'center', gap: 6, marginBottom: 12 },
+  logo: { width: 120, height: 120 },
   title: { fontSize: 56, fontWeight: '900', color: colors.ink, letterSpacing: -2 },
   tagline: { fontSize: 17, fontWeight: '600', color: colors.muted },
   joinRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-end' },
